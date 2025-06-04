@@ -1,0 +1,81 @@
+{% extends "ads/base.html" %}
+{% block content %}
+    <h1 class="page-title">Объявления пользователя {{ username }}</h1>
+    
+    <div class="row">
+        {% for ad in ads %}
+            <div class="col-md-4 mb-4">
+                <a href="{% url 'ad-detail' ad.id %}" class="text-decoration-none text-dark">
+                    <div class="card ad-card h-100">
+                        <div class="card-img-container">
+                            {% if ad.images.count > 0 %}
+                                <img src="{{ ad.images.first.image.url }}" class="card-img-top" alt="{{ ad.title }}">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center h-100 w-100">
+                                    <span class="text-muted">Нет изображения</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ ad.title }}</h5>
+                            
+                            {% if ad.price %}
+                                <div class="price">₽{{ ad.price|floatformat:0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            {% if user.is_authenticated and user.username == username %}
+                                <div class="btn-group w-100">
+                                    <a class="btn btn-sm btn-secondary rounded-left" href="{% url 'ad-update' ad.id %}">Изменить</a>
+                                    <a class="btn btn-sm btn-danger rounded-right" href="{% url 'ad-delete' ad.id %}">Удалить</a>
+                                </div>
+                            {% else %}
+                                Автор: <a href="{% url 'user-ads' ad.author.username %}">{{ ad.author }}</a> от {{ ad.date_posted|date:"d.m.Y" }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">У этого пользователя нет объявлений.</div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    {% if is_paginated %}
+        <nav aria-label="Навигация по страницам">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">Первая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Предыдущая</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Следующая</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Последняя</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+{% endblock %}

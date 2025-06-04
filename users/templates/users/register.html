@@ -1,0 +1,29 @@
+{% extends "ads/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Регистрация</h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        <fieldset class="form-group" style="margin-bottom: 0;">
+                            {{ form|crispy }}
+                        </fieldset>
+                        <div class="form-group">
+                            <button class="btn btn-primary" type="submit">Зарегистрироваться</button>
+                        </div>
+                    </form>
+                    <div class="border-top" style="padding-top: 0.25rem; margin-bottom: -12px;">
+                        <small class="text-muted">
+                            Уже есть аккаунт? <a class="ml-2" href="{% url 'login' %}">Войти</a>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

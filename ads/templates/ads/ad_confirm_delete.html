@@ -1,0 +1,21 @@
+{% extends "ads/base.html" %}
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>Удалить объявление</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                {% csrf_token %}
+                <fieldset class="form-group">
+                    <h4>Вы уверены, что хотите удалить объявление "{{ object.title }}"?</h4>
+                    <p class="text-muted">Это действие нельзя отменить.</p>
+                </fieldset>
+                <div class="form-group">
+                    <button class="btn btn-danger" type="submit">Да, удалить</button>
+                    <a class="btn btn-secondary" href="{% url 'ad-detail' object.id %}">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

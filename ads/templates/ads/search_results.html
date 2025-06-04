@@ -1,0 +1,80 @@
+{% extends "ads/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Результаты поиска</h2>
+        </div>
+    </div>
+
+    <div class="row">
+        {% for ad in ads %}
+            <div class="col-md-4 mb-4">
+                <a href="{% url 'ad-detail' ad.id %}" class="text-decoration-none text-dark">
+                    <div class="card ad-card h-100">
+                        <div class="card-img-container">
+                            {% if ad.images.count > 0 %}
+                                <img src="{{ ad.images.first.image.url }}" class="card-img-top" alt="{{ ad.title }}">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center h-100 w-100">
+                                    <span class="text-muted">Нет изображения</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title">{{ ad.title }}</h5>
+                            
+                            
+                            {% if ad.price %}
+                                <div class="price">₽{{ ad.price|floatformat:0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="card-footer">
+                            Автор: <a href="{% url 'user-ads' ad.author.username %}">{{ ad.author }}</a> от {{ ad.date_posted|date:"d.m.Y" }}
+                        </div>
+                    </div>
+                </a>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">Не найдено объявлений, соответствующих вашим критериям поиска.</div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{% block sidebar %}
+    <div class="card sidebar-card">
+        <div class="card-header">
+            <h5 class="mb-0">Фильтры поиска</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{% url 'search-ads' %}">
+                {{ form|crispy }}
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-primary">Поиск</button>
+                    <button type="button" id="clear-search-btn" class="btn btn-secondary">Очистить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('clear-search-btn').addEventListener('click', function() {
+            const form = document.querySelector('.sidebar-card form');
+            const inputs = form.querySelectorAll('input, select');
+            
+            inputs.forEach(input => {
+                if (input.type === 'text' || input.type === 'number' || input.tagName === 'TEXTAREA') {
+                    input.value = '';
+                } else if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

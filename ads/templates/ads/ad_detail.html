@@ -1,0 +1,185 @@
+{% extends "ads/base.html" %}
+{% block content %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>{{ object.title }}</h3>
+            <small class="text-muted">{{ object.date_posted|date:"d F Y" }}</small>
+        </div>
+        <div class="card-body" style="padding-top: 0.5rem;">
+            <div class="row">
+                <div class="col-md-7 mb-4">
+                    {% if object.images.count > 0 %}
+                        <div class="product-gallery">
+                            <div class="main-image-container">
+                                <img id="main-product-image" src="{{ object.images.first.image.url }}" class="ad-detail-image" alt="{{ object.title }}">
+                                
+                                {% if object.images.count > 1 %}
+                                    <button class="gallery-nav-btn prev" id="prev-image" aria-label="Предыдущее изображение">
+                                        &lsaquo;
+                                    </button>
+                                    <button class="gallery-nav-btn next" id="next-image" aria-label="Следующее изображение">
+                                        &rsaquo;
+                                    </button>
+                                {% endif %}
+                            </div>
+                            
+                            {% if object.images.count > 1 %}
+                                <div class="image-thumbnails-container">
+                                    <div class="image-thumbnails-scroll">
+                                        {% for image in object.images.all %}
+                                            <div class="thumbnail-item {% if forloop.first %}active{% endif %}" data-image-url="{{ image.image.url }}" data-index="{{ forloop.counter0 }}">
+                                                <img src="{{ image.image.url }}" class="img-thumbnail" alt="Миниатюра товара">
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-5">
+                    <div class="card mb-4 product-details-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Детали</h5>
+                        </div>
+                        <div class="card-body p-0">
+                            <ul class="details-list">
+                                {% if object.price %}
+                                    <li>
+                                        <span class="detail-label">Цена:</span>
+                                        <span class="detail-value">₽{{ object.price|floatformat:0 }}</span>
+                                    </li>
+                                {% endif %}
+                                <li>
+                                    <span class="detail-label">Категория:</span>
+                                    <span class="detail-value">{{ object.category.name }}</span>
+                                </li>
+                                {% if object.location %}
+                                    <li>
+                                        <span class="detail-label">Местоположение:</span>
+                                        <span class="detail-value">{{ object.location }}</span>
+                                    </li>
+                                {% endif %}
+                                <li>
+                                    <span class="detail-label">Контакт:</span>
+                                    <span class="detail-value">{{ object.contact_info }}</span>
+                                </li>
+                                <li>
+                                    <span class="detail-label">Автор:</span>
+                                    <span class="detail-value">
+                                        <a href="{% url 'user-ads' object.author.username %}">{{ object.author }}</a>
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    {% if object.author == user %}
+                        <div class="btn-group w-100">
+                            <a href="{% url 'ad-update' object.id %}" class="btn btn-secondary">Изменить</a>
+                            <a href="{% url 'ad-delete' object.id %}" class="btn btn-danger">Удалить</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="ad-detail-section">
+                <h4>Описание</h4>
+                <p>{{ object.description|linebreaksbr }}</p>
+            </div>
+            
+            {% if object.videos.all %}
+                <div class="ad-detail-section">
+                    <h4>Видео</h4>
+                    <div class="row">
+                        {% for video in object.videos.all %}
+                            <div class="col-md-6 mb-3">
+                                <video controls class="img-fluid rounded">
+                                    <source src="{{ video.video.url }}" type="video/mp4">
+                                    Ваш браузер не поддерживает видео тег.
+                                </video>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+            
+            {% if object.files.all %}
+                <div class="ad-detail-section">
+                    <h4>Дополнительные файлы</h4>
+                    <ul class="list-group">
+                        {% for file in object.files.all %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ file.file_name }}
+                                <a href="{{ file.file.url }}" download class="btn btn-sm btn-primary">Скачать</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        const thumbnails = document.querySelectorAll('.thumbnail-item');
+        const mainImage = document.getElementById('main-product-image');
+        const prevBtn = document.getElementById('prev-image');
+        const nextBtn = document.getElementById('next-image');
+        const prevThumbBtn = document.getElementById('prev-thumbnail');
+        const nextThumbBtn = document.getElementById('next-thumbnail');
+        const thumbnailsContainer = document.querySelector('.image-thumbnails-scroll');
+        
+        let currentIndex = 0;
+        const totalImages = thumbnails.length;
+        
+        // Функция для обновления основного изображения
+        function updateMainImage(index) {
+            if (index < 0) index = totalImages - 1;
+            if (index >= totalImages) index = 0;
+            
+            currentIndex = index;
+            
+            const activeThumb = document.querySelector(`.thumbnail-item[data-index="${index}"]`);
+            const imageUrl = activeThumb.getAttribute('data-image-url');
+            mainImage.src = imageUrl;
+            
+            thumbnails.forEach(t => t.classList.remove('active'));
+            activeThumb.classList.add('active');
+            
+            activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }
+        
+        thumbnails.forEach(thumbnail => {
+            thumbnail.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                updateMainImage(index);
+            });
+        });
+        
+        if (prevBtn && nextBtn) {
+            prevBtn.addEventListener('click', function() {
+                updateMainImage(currentIndex - 1);
+            });
+            
+            nextBtn.addEventListener('click', function() {
+                updateMainImage(currentIndex + 1);
+            });
+        }
+        
+        if (prevThumbBtn && nextThumbBtn && thumbnailsContainer) {
+            prevThumbBtn.addEventListener('click', function() {
+                thumbnailsContainer.scrollBy({ left: -200, behavior: 'smooth' });
+            });
+            
+            nextThumbBtn.addEventListener('click', function() {
+                thumbnailsContainer.scrollBy({ left: 200, behavior: 'smooth' });
+            });
+        }
+    });
+</script>
+{% endblock %}

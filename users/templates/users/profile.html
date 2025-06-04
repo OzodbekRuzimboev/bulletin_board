@@ -1,0 +1,115 @@
+{% extends "ads/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 text-center mb-3">
+                    <div class="profile-img-container">
+                        <img class="profile-img" src="{{ user.profile.image.url }}" alt="Фото профиля {{ user.username }}">
+                    </div>
+                    <div class="mt-2">
+                        <form method="POST" enctype="multipart/form-data" id="photo-form">
+                            {% csrf_token %}
+                            <input type="file" name="image" id="id_image" accept="image/*" style="display: none;">
+                            <input type="hidden" name="update_photo" value="true">
+                            <button type="button" id="change-photo-btn" class="btn btn-secondary" style="width: 190px; font-size: 14px;">Изменить фото профиля</button>
+                        </form>
+                        
+                        <form method="POST" id="delete-photo-form" class="mt-2">
+                            {% csrf_token %}
+                            <input type="hidden" name="delete_photo" value="true">
+                            <button type="submit" class="btn btn-outline-danger" style="width: 190px; font-size: 14px;">Удалить фото профиля</button>
+                        </form>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <form method="POST" enctype="multipart/form-data" id="profile-form">
+                        {% csrf_token %}
+                        <fieldset class="form-group">
+                            <legend class="border-bottom mb-4">Информация профиля</legend>
+                            {{ u_form.username|as_crispy_field }}
+                            {{ u_form.email|as_crispy_field }}
+                            {{ p_form.phone|as_crispy_field }}
+                        </fieldset>
+                        <div class="form-group">
+                            <button class="btn btn-primary" type="submit">Обновить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h3>Мои объявления</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for ad in user.ads.all %}
+                    <div class="col-md-4 mb-4">
+                        <a href="{% url 'ad-detail' ad.id %}" class="text-decoration-none text-dark">
+                            <div class="card ad-card h-100">
+                                <div class="card-img-container">
+                                    {% if ad.images.count > 0 %}
+                                        <img src="{{ ad.images.first.image.url }}" class="card-img-top" alt="{{ ad.title }}">
+                                    {% else %}
+                                        <div class="d-flex align-items-center justify-content-center h-100 w-100">
+                                            <span class="text-muted">Нет изображения</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ ad.title }}</h5>
+                                    
+                                    {% if ad.price %}
+                                        <div class="price">₽{{ ad.price|floatformat:0 }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer">
+                                    <div class="btn-group w-100">
+                                        <a class="btn btn-sm btn-secondary rounded-left" href="{% url 'ad-update' ad.id %}">Изменить</a>
+                                        <a class="btn btn-sm btn-danger rounded-right" href="{% url 'ad-delete' ad.id %}">Удалить</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">Вы еще не разместили ни одного объявления.</div>
+                        <a href="{% url 'ad-create' %}" class="btn btn-primary">Разместить первое объявление</a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const changePhotoBtn = document.getElementById('change-photo-btn');
+        const fileInput = document.getElementById('id_image');
+        const photoForm = document.getElementById('photo-form');
+        
+        if (changePhotoBtn && fileInput && photoForm) {
+            changePhotoBtn.addEventListener('click', function() {
+                fileInput.click();
+            });
+            
+            // При выборе файла автоматически отправляем форму
+            fileInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    changePhotoBtn.textContent = 'Загрузка...';
+                    changePhotoBtn.disabled = true;
+                
+                    photoForm.submit();
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

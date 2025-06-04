@@ -1,0 +1,179 @@
+{% extends "ads/base.html" %}
+{% load crispy_forms_tags %}
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h2>{{ title }}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data" id="update-ad-form">
+                {% csrf_token %}
+                
+                <input type="hidden" name="images_to_delete" id="images-to-delete" value="">
+                <input type="hidden" name="videos_to_delete" id="videos-to-delete" value="">
+                <input type="hidden" name="files_to_delete" id="files-to-delete" value="">
+                
+                <fieldset class="form-group">
+                    <legend class="border-bottom mb-4">Информация об объявлении</legend>
+                    {{ form|crispy }}
+                </fieldset>
+                
+                {% if ad_images %}
+                <div class="form-group">
+                    <label>Текущие изображения</label>
+                    <div class="row">
+                        {% for image in ad_images %}
+                        <div class="col-md-3 col-6 mb-3 media-item" id="image-{{ image.id }}">
+                            <img src="{{ image.image.url }}" class="img-fluid rounded media-preview" alt="Изображение объявления">
+                            <button type="button" class="media-delete-btn" data-id="{{ image.id }}" data-type="image" title="Удалить изображение">×</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="id_images">{% if ad_images %}Добавить ещё изображения{% else %}Изображения{% endif %}</label>
+                    <input type="file" name="images" id="id_images" multiple class="form-control-file">
+                    <small class="form-text text-muted">Вы можете выбрать несколько изображений, удерживая Ctrl (или Cmd на Mac) при выборе файлов.</small>
+                </div>
+
+                {% if ad_videos %}
+                <div class="form-group">
+                    <label>Текущие видео</label>
+                    <div class="row">
+                        {% for video in ad_videos %}
+                        <div class="col-md-6 mb-3 media-item" id="video-{{ video.id }}">
+                            <video controls class="img-fluid media-preview">
+                                <source src="{{ video.video.url }}" type="video/mp4">
+                                Ваш браузер не поддерживает видео тег.
+                            </video>
+                            <button type="button" class="media-delete-btn" data-id="{{ video.id }}" data-type="video" title="Удалить видео">×</button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label>Видео (необязательно)</label>
+                    <input type="file" name="video" id="id_video" class="form-control-file">
+                </div>
+
+                {% if ad_files %}
+                <div class="form-group">
+                    <label>Текущие файлы</label>
+                    <ul class="list-group">
+                        {% for file in ad_files %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center" id="file-{{ file.id }}">
+                            <a href="{{ file.file.url }}" download>{{ file.file_name }}</a>
+                            <button type="button" class="btn btn-sm btn-danger delete-file-btn" data-id="{{ file.id }}" data-type="file" title="Удалить файл">Удалить</button>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label>Дополнительный файл (необязательно)</label>
+                    <input type="file" name="file" id="id_file" class="form-control-file">
+                </div>
+                
+                <div class="form-group" style="padding-top: 10px; margin-bottom: -4px;">
+                    <button class="btn btn-primary" type="submit">Сохранить</button>
+                    <a class="btn btn-secondary" href="{% url 'ad-detail' object.id %}">Отмена</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const itemsToDelete = {
+            images: [],
+            videos: [],
+            files: []
+        };
+        
+        const imagesInput = document.getElementById('images-to-delete');
+        const videosInput = document.getElementById('videos-to-delete');
+        const filesInput = document.getElementById('files-to-delete');
+        
+        document.querySelectorAll('.media-delete-btn, .delete-file-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                const type = this.getAttribute('data-type');
+                const mediaItem = this.closest(type === 'file' ? '.list-group-item' : '.media-item');
+                
+                if (!itemsToDelete[type + 's'].includes(id)) {
+                    itemsToDelete[type + 's'].push(id);
+                }
+                
+                if (type === 'image') {
+                    imagesInput.value = itemsToDelete.images.join(',');
+                    console.log("Изображения для удаления:", imagesInput.value);
+                } else if (type === 'video') {
+                    videosInput.value = itemsToDelete.videos.join(',');
+                } else if (type === 'file') {
+                    filesInput.value = itemsToDelete.files.join(',');
+                }
+                
+                mediaItem.style.opacity = '0.3';
+                mediaItem.style.position = 'relative';
+                
+                if (!mediaItem.querySelector('.deletion-overlay')) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'position-absolute w-100 h-100 d-flex align-items-center justify-content-center deletion-overlay';
+                    overlay.style.top = '0';
+                    overlay.style.left = '0';
+                    overlay.style.backgroundColor = 'rgba(0,0,0,0.1)';
+                    overlay.style.zIndex = '5';
+                    overlay.innerHTML = '<span class="badge badge-danger">Отмечено для удаления</span>';
+                    mediaItem.appendChild(overlay);
+                    
+                    const undoBtn = document.createElement('button');
+                    undoBtn.className = 'btn btn-sm btn-warning position-absolute';
+                    undoBtn.style.bottom = '10px';
+                    undoBtn.style.right = '10px';
+                    undoBtn.style.zIndex = '6';
+                    undoBtn.textContent = 'Отменить';
+                    undoBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const index = itemsToDelete[type + 's'].indexOf(id);
+                        if (index > -1) {
+                            itemsToDelete[type + 's'].splice(index, 1);
+                        }
+                        
+                        if (type === 'image') {
+                            imagesInput.value = itemsToDelete.images.join(',');
+                            console.log("Изображения для удаления после отмены:", imagesInput.value);
+                        } else if (type === 'video') {
+                            videosInput.value = itemsToDelete.videos.join(',');
+                        } else if (type === 'file') {
+                            filesInput.value = itemsToDelete.files.join(',');
+                        }
+                        
+                        mediaItem.style.opacity = '1';
+                        mediaItem.removeChild(overlay);
+                        mediaItem.removeChild(undoBtn);
+                    });
+                    mediaItem.appendChild(undoBtn);
+                }
+            });
+        });
+        
+        const form = document.getElementById('update-ad-form');
+        form.addEventListener('submit', function(e) {
+            console.log("Форма отправлена");
+            console.log("Изображения для удаления:", document.getElementById('images-to-delete').value);
+            console.log("Видео для удаления:", document.getElementById('videos-to-delete').value);
+            console.log("Файлы для удаления:", document.getElementById('files-to-delete').value);
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
