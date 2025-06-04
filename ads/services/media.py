@@ -10,7 +10,7 @@ class MediaService:
         if video := files.get('video'):
             AdVideo.objects.create(ad=ad, video=video)
         if file_obj := files.get('file'):
-            AdFile.objects.create(ad=ad, file=file_obj, file_name=file_obj.name)
+            AdFile.objects.create(ad=ad, file=file_obj)
 
     @staticmethod
     def delete(instance):

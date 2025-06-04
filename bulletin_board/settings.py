@@ -51,6 +51,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'ads.context_processors.categories',
             ],
         },
     },
@@ -125,7 +126,3 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For developm
 
 # Default from email
 DEFAULT_FROM_EMAIL = 'noreply@bulletinboard.com'
-
-TEMPLATES[0]['OPTIONS']['context_processors'] += [
-    'ads.context_processors.categories',
-]

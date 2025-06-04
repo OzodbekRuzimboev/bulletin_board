@@ -17,26 +17,6 @@ class AdForm(forms.ModelForm):
             'contact_info': 'Контактная информация'
         }
 
-class AdImageForm(forms.Form):
-    images = forms.FileField(
-        label='Изображения',
-        required=False
-    )
-
-class AdVideoForm(forms.ModelForm):
-    video = forms.FileField(required=False, label='Видео')
-    
-    class Meta:
-        model = AdVideo
-        fields = ['video']
-
-class AdFileForm(forms.ModelForm):
-    file = forms.FileField(required=False, label='Файл')
-    
-    class Meta:
-        model = AdFile
-        fields = ['file']
-
 class AdSearchForm(forms.Form):
     query = forms.CharField(required=False, label='Поиск', widget=forms.TextInput(attrs={'placeholder': 'Поиск...'}))
     category = forms.ModelChoiceField(
