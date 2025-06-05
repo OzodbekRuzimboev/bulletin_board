@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap4',
     "django.contrib.postgres",
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 MIDDLEWARE = [
